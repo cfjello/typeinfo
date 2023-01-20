@@ -1,7 +1,7 @@
 # TypeInfo 
-#### Note: This has only been testet server-side with Deno + V8
+#### Note: This has only been testet server-side with Deno V8
 
-This package provides Extended Type detection for an instantiated javascript object. The getTypes() function returns an object. The detected javascript data types are: 
+This package provides Extended Type Detection for an instantiated javascript object. The `getTypes()` function traverses a single- or multi-level user defined object and returns another object showing the inferred types. The detected javascript data types are: 
 
 - symbol
 - string
@@ -11,20 +11,19 @@ This package provides Extended Type detection for an instantiated javascript obj
 - boolean
 - Regexp
 - object
-- Array
+- Array, including typed arrays like `Int16Array`
 - function
-- User defined classes
-
-as well as:
-
 - null
 - undefined
 
+as well as:
+- User defined classes
 
 You should Note: 
+- This implementation uses `Object.getPrototypeOf(obj).constructor.name` when dealing with classes, a field that has not always been present in the past, as well as the V8 parameter `Object.getOwnPropertyDescriptor(obj, 'name').value`, which used to be called `storeName` and thus may as well be subject to change in the future.
 - Since the data type lookup is done on an instantiated javascript object you will have to initialize the object with values that allow for detection of the type - 'null' and 'undefined' are by definition not very telling. In the same vain, it is not possible to assign multiple types to an object key.
-- Some types like 'enum' in the TypeScript example below, as well all other non-primitive TypeScript types, are not detectable once compiled and assigned to a javascript object, but user defined classes are detected.
-- This extented type detection has only been tested using the Deno default V8 (Typescript to) javascript compile target.
+- Some types like 'enum' in the TypeScript example below, as well all other non-primitive TypeScript types, are not detectable once compiled to javascript, and only the assigned value type can be found.
+- User defined classes are detected.
 
 Given an instantiated object (the complete file can be found in the './examples' directory):
 
@@ -54,11 +53,14 @@ const employee  = {
 const dataTypes = getTypes('Employee', employee)
 console.log(JSON.stringify(dataTypes, undefined, 2))
 ```
-and running it form within the examples directory: 
+The call format is `getTypes('Employee', employee, false)` and the arguments are:
+  1) *name*: Your name for the type object
+  2) *obj*:  The object to infer types from
+  3) *flatten*: if set to `true` the returned object will be flattened (the default is 'false').
 
+Try running the example: 
 ```
 deno run ./examples/typeInfo.ts
-
 ```
 produces the following output, where you should note:
 
@@ -66,11 +68,9 @@ produces the following output, where you should note:
 - Even though the enum type is not detected, the correct type of the value assigned is found
 - For an Array with multiple types are assigned, these types are correctly listed
 - User defined classes are listed
-
 ```
 {
   "name": "Employee",
-  "desc": "Employee",
   "type": "object",
   "props": {
     "recId": {
@@ -193,5 +193,55 @@ produces the following output, where you should note:
       }
     }
   }
+}
+```
+Calling  `getTypes('Employee', employee, true)` will return:
+```
+{
+  "name": "Employee",
+  "type": "object",
+  "props.recId.desc": "Rec Id",
+  "props.recId.type": "symbol",
+  "props.employeeNumber.desc": "Employee Number",
+  "props.employeeNumber.type": "bigint",
+  "props.lastName.desc": "Last Name",
+  "props.lastName.type": "string",
+  "props.firstName.desc": "First Name",
+  "props.firstName.type": "string",
+  "props.extension.type": "string",
+  "props.email.type": "string",
+  "props.officeCode.desc": "Office Code",
+  "props.officeCode.type": "undefined",
+  "props.reportsTo.desc": "Reports To",
+  "props.reportsTo.type": "null",
+  "props.jobTitle.desc": "Job Title",
+  "props.jobTitle.type": "string",
+  "props.hired.type": "Date",
+  "props.hired.props": {},
+  "props.active.type": "boolean",
+  "props.regexp.type": "RegExp",
+  "props.regexp.props": {},
+  "props.tools.type": "Array",
+  "props.tools.props.0.type": "string",
+  "props.tools.props.1.type": "number",
+  "props.tools.props.2.type": "symbol",
+  "props.scoreText.desc": "Score Text",
+  "props.scoreText.type": "string",
+  "props.image.type": "Image",
+  "props.image.props.name.type": "string",
+  "props.image.props.format.type": "string",
+  "props.image2.desc": "Image 2",
+  "props.image2.type": "Image2",
+  "props.image2.props.name.type": "string",
+  "props.image2.props.format.type": "string",
+  "props.image2.props.score.type": "number",
+  "props.images.type": "Array",
+  "props.images.props.0.type": "Image",
+  "props.images.props.0.props.name.type": "string",
+  "props.images.props.0.props.format.type": "string",
+  "props.images.props.1.type": "Image2",
+  "props.images.props.1.props.name.type": "string",
+  "props.images.props.1.props.format.type": "string",
+  "props.images.props.1.props.score.type": "number"
 }
 ```

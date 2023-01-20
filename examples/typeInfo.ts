@@ -38,5 +38,5 @@ const employee  = {
     images: [ new Image('Table'),  new Image2('Computer') ]
 }
 
-const dataTypes = getTypes('Employee', employee)
+const dataTypes = getTypes('Employee', employee, false)
 console.log(JSON.stringify(dataTypes, undefined, 2))

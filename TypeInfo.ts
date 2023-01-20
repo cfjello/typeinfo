@@ -34,7 +34,6 @@ const inspectObject = (obj: any| null ): string => {
     if ( proto && proto.constructor && proto.constructor.name !== 'Object' ) {
         matchType = proto.constructor.name 
     }
-    //
     // Make the destinction between Function and function - in V8 it seems that 
     // Function has a storeName property value: {"value":"anonymous","writable":false,"enumerable":false,"configurable":true} 
     // where function has a storeName property value with an actual function storeName: {"value":"G","writable":false,"enumerable":false,"configurable":true}
@@ -46,10 +45,16 @@ const inspectObject = (obj: any| null ): string => {
     return matchType;
 }
 
+/**
+ * Finds the types of an object with assigned values
+ * 
+ * @param name The object to be examined
+ * @returns string  The property type 
+ */
 export function getTypes<T>(  name: string, masterObj: T, flat = false ): Record<string, unknown> {
     const res = {
         name: name,
-        desc: unCamel(name),
+        // desc: unCamel(name),
         type: "object",
         props: {},
     } as ResType
